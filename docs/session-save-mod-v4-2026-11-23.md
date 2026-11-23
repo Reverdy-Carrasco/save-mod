@@ -1,7 +1,7 @@
 # Session — `save mod` 4 (membre forme 3) — 23 novembre 2026
 
 **Point de départ :** v3 sur `main` (`19d4693`), essayée sur l'unité. Briefing `briefing-save-mod-v4-2026-11-23.md`.
-**Résultat :** v4 buildée, vérifiée et testée sur ordinateur, poussée sur la branche **`v4`** (commit `177b18a`). **Pas encore essayée sur l'unité.** `main` reste en v3.
+**Résultat :** v4 buildée, vérifiée et testée sur ordinateur (commit `177b18a`), puis **essayée sur l'unité : tout fonctionne**, selon le retour de l'utilisateur. Fusionnée dans `main`.
 
 ## 1. Ce qui change, v3 → v4
 
@@ -60,7 +60,7 @@
 
 **Contrôles :** `pack_build.py check`, `publish_check.py --stock` (rien du firmware dans le dépôt), `catalog_check.py` sur le brouillon d'entrée.
 
-## 5. À essayer sur l'unité (test de recette §7 du briefing)
+## 5. Essai sur l'unité (test de recette §7 du briefing) — tout fonctionne
 
 - **`fx_active` :** cassette 1 effet allumé, cassette 2 éteint. L'interrupteur doit suivre la cassette.
 - **`fx_effect` :**
@@ -75,6 +75,6 @@
 
 ## 6. Ensuite
 
-1. Essai de la v4 sur l'unité.
-2. Si tout est bon : fusionner `v4` dans `main`, puis ouvrir la PR catalogue avec `catalog-entry-save-mod.md`. Si un fichier change entre-temps, mettre à jour `commit`, `sha256` et `bytes`.
+1. ~~Essai de la v4 sur l'unité~~ : fait, tout fonctionne.
+2. ~~Fusion de `v4` dans `main`~~ : fait. PR catalogue préparée (`catalog-entry-save-mod.md`).
 3. Optionnel : une PR upstream pour qu'open-field expose un choix d'effet de pack sur le master dans son API publique.

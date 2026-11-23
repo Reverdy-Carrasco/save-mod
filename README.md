@@ -66,7 +66,7 @@ If anything goes wrong, hold the Help key at start-up: the unit starts without a
 
 ## Compatibility
 
-No place of the firmware is changed, so the pack cannot collide with another pack. Version 3 was tried on a unit together with `fx train`, `lfo`, `master mod`, `sidechain` and `garden`.
+No place of the firmware is changed, so the pack cannot collide with another pack. Tried on a unit together with `fx train`, `lfo`, `master mod`, `sidechain` and `garden`.
 
 - **What it asks of the base:** `op1f_rack_at` and `op1f_rack_list`, the base's list of the packs' effects, which any pack may read.
 - **How it puts a pack's effect on the master:** through the mixer controller's word that the base stands in (its `op1f_fx_master_pick`), read as the unit holds it. The pack names no function of the base that the base does not offer. If a later base stops standing in that word, a pack's effect is no longer put back, but nothing else breaks.
@@ -89,8 +89,8 @@ python -I tools/pack_build.py build3 --recipe examples/save-mod/recipe.json --pr
 
 ## Status
 
-- **Version 4 of the pack** (member form 3): built and checked with `pack_build.py check`. The member's text, its three forms and the hold to ranges were tested on a computer, and so was the way the effect is put on, against stand-ins for the firmware and the base. **Not yet tried on a unit.**
-- **Version 3** (member form 2): tried on a unit (OS 1.7.3+0, open-field 0.12). The tape speed, the EQ, the master effect with its values and the compressor come back with each tape.
+- **Version 4 of the pack** (member form 3): tried on a unit (OS 1.7.3+0, open-field 0.12, base 30). The tape speed, the EQ, the master effect with its values, its switch and a pack's effect riding it, the compressor, and M1 and M2 come back with each tape. Built and checked with `pack_build.py check`; the member's text, its three forms and the way the effect is put on were also tested on a computer.
+- **Version 3** (member form 2): tried on a unit. It keeps everything but the effect's switch, a pack's effect on the master and M1/M2.
 - Versions 1 and 2 are not to be used:
   - version 1 did not keep the master effect, and could put one effect's values on another; a freeze was seen with it while changing the effect;
   - version 2 brought back another effect than the one saved.

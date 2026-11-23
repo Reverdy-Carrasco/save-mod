@@ -1,7 +1,7 @@
 # Brouillon d'entrée catalogue — `save mod` 4
 
 **Où elle va :** `catalog/packs.json` d'open-field, à la fin de `packs`, dans une pull request qui ne change que ce fichier (`docs/catalog.md` d'open-field).
-**Quand :** à ouvrir seulement après l'essai de la v4 sur l'unité. Pas encore ouverte.
+**Quand :** la v4 a été essayée sur l'unité, tout fonctionne. La PR est prête, à ouvrir sur ton accord.
 
 ```json
 {
