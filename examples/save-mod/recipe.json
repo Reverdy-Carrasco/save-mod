@@ -1,0 +1,42 @@
+{
+  "about": "Per-tape mixer pages 2, 3 and 4 and the tape speed: the master EQ's three values, the master effect's eight, the master compressor's four and the tape's speed are kept with each tape as the member save_mod, through level 7 of the base. A tape loaded takes its own; a tape with none takes the values the unit had at the start. It changes no place of the firmware and needs the base.",
+  "name": "save mod",
+  "version": 1,
+  "interface": 1,
+  "build": "build_save_mod",
+  "sources": [
+    "examples/save-mod/save-mod.cpp",
+    "examples/save-mod/save-mod_card.s"
+  ],
+  "works_with": [],
+  "serves": [],
+  "exports": [],
+  "pictures": [],
+  "card": {
+    "level": 7,
+    "frame": "save_mod_frame",
+    "pick": null,
+    "pictures": false,
+    "input": null,
+    "folders": [],
+    "asks": [
+      {
+        "kind": "keeps",
+        "name": "save_mod",
+        "changed": "save_mod_changed",
+        "keys": [
+          {
+            "name": "save_mod",
+            "files": [
+              "tape"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "marks": [],
+  "named": true,
+  "sum": true,
+  "path": null
+}
