@@ -22,7 +22,7 @@ op1f_card_save_mod_level:
 .global op1f_card_save_mod
 .type op1f_card_save_mod, STT_OBJECT
 op1f_card_save_mod:
-    .long 0x44524143, 64, 7, 3
+    .long 0x44524143, 64, 7, 4
     .ascii "save mod"
     .fill 8, 1, 0
     .long save_mod_frame
