@@ -40,9 +40,11 @@ Pré-requis : OS 1.7.3+0, open-field installé, `base.pack` dans `user/pk/`.
 
 Retrait : supprimer le fichier et rebooter.
 
+En cas de souci, maintenir la touche Help au démarrage lance l'unité sans aucun pack, sans rien effacer.
+
 ## Compatibilité
 
-Aucun emplacement du firmware n'est modifié, donc pas de collision possible avec un autre pack. Quand le pack change l'effet master, le base retire un effet de pack posé sur le master, comme quand l'unité, le MIDI ou `fx train` change l'effet. Un effet de pack sur le master n'est pas gardé par cassette. Le nom du membre, `save_mod`, est propre au pack. Un autre pack qui écrit lui aussi dans les variables de l'EQ, de l'effet ou du compresseur master au chargement d'une cassette entrerait en concurrence avec celui-ci.
+Aucun emplacement du firmware n'est modifié, donc pas de collision possible avec un autre pack. Essayé sur une unité avec `fx train`, `lfo`, `master mod`, `sidechain` et `garden`. Quand le pack change l'effet master, le base retire un effet de pack posé sur le master, comme quand l'unité, le MIDI ou `fx train` change l'effet. Un effet de pack sur le master n'est pas gardé par cassette. Le nom du membre, `save_mod`, est propre au pack. Un autre pack qui écrit lui aussi dans les variables de l'EQ, de l'effet ou du compresseur master au chargement d'une cassette entrerait en concurrence avec celui-ci.
 
 ## Construire
 
@@ -55,12 +57,10 @@ python -I tools/pack_build.py build3 --recipe examples/save-mod/recipe.json --pr
 
 ## Statut
 
-- **Version 3 du pack** (forme du membre : version 2). Buildé (`out/save mod.pack`, 5 700 octets), vérifié par `pack_build.py check`, code JSON et bornage testés sur ordinateur. **Pas encore essayée sur une unité.**
-- **Version 1** : essayée sur une unité, tout se garde par cassette. Un gel a été vu en changeant d'effet. Cause probable : la v1 ne gardait pas l'effet et pouvait appliquer à un effet les valeurs d'un autre.
-- **Version 2** : essayée sur une unité, pas de gel, mais l'effet rechargé n'était pas le bon (CWO revenu en Phone), et le log se remplissait de `Master fx param out of range`. La v2 passait le numéro de l'effet à la fonction de choix de la liste, qui attend un autre numéro. Corrigé en version 3.
-- Après avoir écrit l'EQ, le pack appelle la fonction du firmware qui transmet ses valeurs au son. Après la vitesse bande, il appelle le setter avec un pas de 0. L'effet master est posé par la fonction que le chargement d'`op1.json` utilise.
-- Le fichier `out/save mod.pack` a été buildé avec une toolchain Blackfin compilée sous Linux depuis le fork épinglé par open-xy. Avec cette toolchain, le loader et les exemples d'open-field sortent identiques octet pour octet aux références ; seul `base.pack` diffère légèrement.
+- **Version 3 du pack** (forme du membre : version 2) : essayée sur une unité (OS 1.7.3+0, open-field 0.12). La vitesse bande, l'EQ, l'effet master avec ses valeurs et le compresseur reviennent avec chaque cassette.
+- Les versions 1 et 2 ne sont plus à utiliser. La version 1 ne gardait pas l'effet master et pouvait appliquer à un effet les valeurs d'un autre. Un gel a été vu en changeant d'effet avec elle. La version 2 rechargeait un autre effet que celui sauvé. Les cassettes qu'elles ont écrites sont lues par la version 3.
+- Le fichier `out/save mod.pack` a été buildé avec une toolchain Blackfin compilée sous Linux depuis le fork épinglé par open-xy. Avec cette toolchain, le loader et les exemples d'open-field sortent identiques octet pour octet aux références ; seul `base.pack` diffère légèrement. Un build avec la toolchain Windows de référence peut donner un fichier différent mais équivalent.
 
 ## Licence
 
-MIT.
+MIT, voir [LICENSE](LICENSE).

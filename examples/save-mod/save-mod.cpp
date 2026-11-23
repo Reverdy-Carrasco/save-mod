@@ -46,8 +46,7 @@
 // The values are read once a frame and written only after a tape load, on the display thread, where the unit's own
 // pages change them. A 32-bit word is written whole, so the audio code never reads half a value.
 //
-// What has been tried: built and checked on a computer only, the member's text tested there for both versions.
-// Nothing of it has run on a unit yet.
+// What has been tried: version 3 runs on a unit (OS 1.7.3+0, open-field 0.12): each tape brings back its values.
 
 #include "build_r4b_card.h"
 
