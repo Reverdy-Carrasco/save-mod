@@ -49,14 +49,14 @@ Dans un clone d'open-field avec la toolchain installée (`docs/build.md`) :
 
 ```bash
 cp -r <ce dépôt>/examples/save-mod examples/
-python -I tools/pack_build.py card --recipe examples/save-mod/recipe.json --out examples/save-mod/save-mod_card.s
 python -I tools/pack_build.py build3 --recipe examples/save-mod/recipe.json --profile profiles/op1f-1.7.3.json --out "out/save mod.pack"
 ```
 
 ## Statut
 
-- **v1** : `eq`, `fx`, `master`, `tape_speed`. Testé sur ordinateur uniquement (lecture et écriture du JSON). **Pas encore buildé, pas encore essayé sur une unité.**
-- À vérifier sur l'unité : que l'EQ change bien de son tout de suite quand le pack écrit ses valeurs, et que la vitesse bande se met à jour par l'appel au setter avec un pas de 0.
+- **v1** : `eq`, `fx`, `master`, `tape_speed`. Buildé (`out/save mod.pack`, 4 880 octets) et vérifié par `pack_build.py check`. Code JSON testé sur ordinateur. **Pas encore essayé sur une unité.**
+- Le fichier `out/save mod.pack` a été buildé avec une toolchain Blackfin compilée sous Linux depuis le fork épinglé par open-xy. Avec cette toolchain, le loader et les exemples d'open-field sortent identiques octet pour octet aux références ; seul `base.pack` diffère légèrement. Un build avec la toolchain Windows de référence peut donner un `save mod.pack` différent mais équivalent.
+- Après avoir écrit l'EQ, le pack appelle la fonction du firmware qui transmet ses valeurs au son, comme le firmware après chaque changement. Après la vitesse bande, il appelle le setter avec un pas de 0, qui la réapplique dans sa plage et met à jour la vitesse de lecture. Les valeurs de l'effet et du compresseur sont lues directement par le code audio.
 - **v2** : `fx_type`, après le reverse de la variable et de la fonction qui change l'effet master.
 
 ## Licence

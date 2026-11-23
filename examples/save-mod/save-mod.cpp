@@ -23,6 +23,9 @@
 //
 // Where it meets the firmware (OS 1.7.3+0 only):
 //   0x849a8998  the master EQ's three words           read and written by the unit's own save and load of its settings
+//   0x8c0bacb4  the function that hands the EQ's three words to the sound (no argument, nothing back): the unit
+//               calls it after each change of the EQ, from its page and from its own load; the pack calls it after
+//               it has written the words
 //   0x11903be0  the master effect's eight words       the same; the audio code reads them
 //   0x11b01e8c  the master compressor's four words    the same; the audio code reads them
 //   0x84c62228  the tape's speed, a 16-bit word, semitones x 1024
@@ -31,8 +34,7 @@
 // The four are read once a frame and written only after a tape load, on the display thread, where the unit's own
 // pages change them. A 32-bit word is written whole, so the audio code never reads half a value.
 //
-// What has been tried: built and checked on a computer only. Whether writing the EQ's words changes the sound at
-// once, or only when the unit next works out its EQ, has to be seen on a unit.
+// What has been tried: built and checked on a computer only. Nothing of it has run on a unit yet.
 
 #include "build_r4b_card.h"
 
@@ -51,6 +53,8 @@ static volatile int* const MASTER_WORDS = (volatile int*)0x11b01e8cu;
 static volatile short* const TAPE_SPEED = (volatile short*)0x84c62228u;
 typedef void (*SpeedStepFn)(int which, int step);
 #define STOCK_SPEED_STEP ((SpeedStepFn)0x8d50ff34u)
+typedef void (*EqApplyFn)();
+#define STOCK_EQ_APPLY ((EqApplyFn)0x8c0bacb4u)
 
 static const char LOG_FILE[] = "op1f/save_mod.cpp";       // the log shows "save_mod"
 static const char KEPT[] = "save_mod";
@@ -113,12 +117,17 @@ static int same(const Kept* a, const Kept* b) {
 
 // A word set as the unit's own load sets it: the value in the upper half, the lower half 0. Left alone when its upper
 // half already holds the value, so that a value that did not change keeps its lower half as the unit left it.
-static void put_word(volatile int* w, int v) {
-    if (upper(*w) != v) *w = (int)((u32)(u16)v << 16);
+// Answers 1 when the word was written.
+static int put_word(volatile int* w, int v) {
+    if (upper(*w) == v) return 0;
+    *w = (int)((u32)(u16)v << 16);
+    return 1;
 }
 
 static void write_unit(const Kept* k) {
-    for (int i = 0; i < EQ_COUNT; ++i) put_word(&EQ_WORDS[i], k->v[i]);
+    int eq = 0;
+    for (int i = 0; i < EQ_COUNT; ++i) eq |= put_word(&EQ_WORDS[i], k->v[i]);
+    if (eq) STOCK_EQ_APPLY();                             // the EQ's words reach the sound only through it
     for (int i = 0; i < FX_COUNT; ++i) put_word(&FX_WORDS[i], k->v[EQ_COUNT + i]);
     for (int i = 0; i < MASTER_COUNT; ++i) put_word(&MASTER_WORDS[i], k->v[EQ_COUNT + FX_COUNT + i]);
     if (*TAPE_SPEED != k->speed) {
