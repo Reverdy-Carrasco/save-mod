@@ -1,66 +1,85 @@
 # save mod.pack
 
-Un pack open-field pour OP-1 Field (OS 1.7.3+0, base de niveau 7 ou plus) qui garde **avec chaque cassette** la vitesse bande et les réglages des pages Mixer 2 (EQ), 3 (FX) et 4 (compresseur master).
+An [open-field](https://github.com/LaP0573/open-field) pack for the OP-1 Field (OS 1.7.3+0, a base of level 7 or later) that keeps the tape speed and the settings of Mixer pages 2 (EQ), 3 (FX) and 4 (master compressor) **with each tape**.
 
-Il ne modifie **aucun endroit du firmware** : il passe par le niveau 7 du base (`docs/level-7.md` d'open-field), qui garde un membre JSON à lui dans le fichier de la cassette.
+It changes **no place of the firmware**. It uses level 7 of the base (open-field's `docs/level-7.md`), which keeps a JSON member of the pack's own in the tape's file.
 
-## Ce que ça fait
+## What it does
 
-Le fichier de chaque cassette reçoit un membre `save_mod` :
+Each tape's file gets a member `save_mod`:
 
 ```json
 "save_mod": {"eq":[0,0,0],"fx":[0,0,0,0,0,0,0,0],"fx_type":"delay","master":[0,0,0,0],"tape_speed":0,"version":2}
 ```
 
-| Membre | Correspond à |
+| Member | What it holds |
 |---|---|
-| `eq` | Mixer page 2 : l'EQ master, 3 valeurs |
-| `fx` | Mixer page 3 : les 8 valeurs de l'effet master |
-| `fx_type` | Mixer page 3 : l'effet master actif, sous le nom qu'`op1.json` lui donne (`delay`, `grid`, `punch`, `phone`, `spring`, `mother`, `nitro`, `cwo`, `vocoder`, `terminal`, `fazer`) |
-| `master` | Mixer page 4 : compresseur master, L, R, drive, release |
-| `tape_speed` | vitesse bande, demi-tons × 1024, de −24 à +12 demi-tons |
-| `version` | forme du membre, 2 (la version 1, sans `fx_type`, est toujours lue : l'effet actif reste alors en place) |
+| `eq` | Mixer page 2: the master EQ, 3 values |
+| `fx` | Mixer page 3: the master effect's 8 values |
+| `fx_type` | Mixer page 3: the active master effect, by the name `op1.json` gives it (`delay`, `grid`, `punch`, `phone`, `spring`, `mother`, `nitro`, `cwo`, `vocoder`, `terminal`, `fazer`) |
+| `master` | Mixer page 4: the master compressor, L, R, drive, release |
+| `tape_speed` | the tape speed, in semitones × 1024, from −24 to +12 semitones |
+| `version` | the member's form, 2. Form 1, with no `fx_type`, is still read: the active effect then stays as it is |
 
-Les valeurs `eq`, `fx` et `master` sont les mêmes nombres 16 bits signés que ceux que l'unité écrit dans `op1.json`.
+The values of `eq`, `fx` and `master` are the same signed 16-bit numbers the unit writes into `op1.json`.
 
-- **Cassette chargée** (changement de cassette, cassette nouvelle ou copiée) : elle prend ses propres valeurs si elle a un `save_mod`. Si son effet master diffère de l'effet actif, le pack le pose comme le fait le chargement d'`op1.json` par l'unité, puis remet les 8 valeurs de la cassette. Les 4 valeurs des boutons sont bornées à la plage de l'effet actif. Une cassette sans `fx_type` (valeurs de la version 1) garde l'effet actif et ses valeurs : ses propres valeurs FX appartiennent peut-être à un autre effet. Sinon (cassette d'avant, cassette nouvelle), elle prend les valeurs que l'unité avait au démarrage, celles d'`op1.json`, et les garde ensuite.
-- **Un réglage change** sur l'une des trois pages, ou la vitesse bande change : la valeur de la cassette suit. Elle est écrite dans le fichier quand l'unité écrit la cassette (c'est l'unité qui décide quand).
-- **Un fichier édité à la main** avec une vitesse hors plage : elle est ramenée dans `[-24, +12]` demi-tons. Un nom d'effet que l'unité ne connaît pas laisse l'effet actif en place. Un membre qui n'a pas la forme de la version 1 ou 2 est ignoré, et la cassette prend les valeurs du démarrage.
+- **A tape is loaded** (a switch to another tape, a new tape or a copy): it takes its own values when it has a `save_mod`.
+  - If its master effect is not the active one, the pack puts it on the way the unit's own load of `op1.json` does, then sets the tape's 8 effect values.
+  - The 4 knob values are held to the active effect's ranges.
+  - A tape with no `fx_type` (values of form 1) keeps the active effect and its values: its own effect values may belong to another effect.
+  - A tape with no `save_mod` (an older tape, or a new one) takes the values the unit had at the start, those of `op1.json`, and keeps them from then on.
+- **A setting changes** on one of the three pages, or the tape speed changes: the tape's value follows. It is written into the file when the unit writes the tape. The unit decides when.
+- **A file edited by hand:**
+  - a tape speed out of range is brought back into `[-24, +12]` semitones;
+  - an effect name the unit does not know leaves the active effect as it is;
+  - a member that has neither form 1 nor form 2 is ignored, and the tape takes the values of the start.
 
-## Rétro-compatibilité
+## Backward compatibility
 
-Le base n'écrit que le membre `save_mod` et ne touche jamais à un membre de l'unité. Sans le pack, ou sans open-field, le firmware lit le fichier comme d'habitude et ignore `save_mod`. Après le retrait du pack, le base continue de conserver le membre avec la cassette.
+The base writes only the member `save_mod` and never touches a member of the unit's own. Without the pack, or without open-field, the firmware reads the file as it always does and ignores `save_mod`. Once the pack is removed, the base still keeps the member with the tape.
 
-## Installation
+## Install
 
-Pré-requis : OS 1.7.3+0, open-field installé, `base.pack` dans `user/pk/`.
+Requirements: OS 1.7.3+0, open-field installed, `base.pack` in `user/pk/`.
 
-1. Copier `save mod.pack` dans `user/pk/`.
-2. Éjecter et rebooter. Au démarrage, le log dit `keeps: 'save mod' keeps 1 value(s) in tapes` puis `save_mod: the values of the start kept`.
+1. Copy `save mod.pack` into `user/pk/`.
+2. Eject and reboot. At start-up the log says `keeps: 'save mod' keeps 1 value(s) in tapes`, then `save_mod: the values of the start kept`.
 
-Retrait : supprimer le fichier et rebooter.
+To remove it: delete the file and reboot.
 
-En cas de souci, maintenir la touche Help au démarrage lance l'unité sans aucun pack, sans rien effacer.
+If anything goes wrong, hold the Help key at start-up: the unit starts without any pack, and nothing is erased.
 
-## Compatibilité
+## Compatibility
 
-Aucun emplacement du firmware n'est modifié, donc pas de collision possible avec un autre pack. Essayé sur une unité avec `fx train`, `lfo`, `master mod`, `sidechain` et `garden`. Quand le pack change l'effet master, le base retire un effet de pack posé sur le master, comme quand l'unité, le MIDI ou `fx train` change l'effet. Un effet de pack sur le master n'est pas gardé par cassette. Le nom du membre, `save_mod`, est propre au pack. Un autre pack qui écrit lui aussi dans les variables de l'EQ, de l'effet ou du compresseur master au chargement d'une cassette entrerait en concurrence avec celui-ci.
+No place of the firmware is changed, so the pack cannot collide with another pack. Tried on a unit together with `fx train`, `lfo`, `master mod`, `sidechain` and `garden`.
 
-## Construire
+- When the pack changes the master effect, the base takes off a pack's effect riding the master, as it does when the unit, MIDI or `fx train` changes the effect.
+- A pack's effect on the master is not kept with the tape.
+- The member's name, `save_mod`, is the pack's own.
+- Another pack that also writes the master EQ, effect or compressor values when a tape loads would compete with this one.
 
-Dans un clone d'open-field avec la toolchain installée (`docs/build.md`) :
+## Build
+
+In a clone of open-field with the toolchain installed (`docs/build.md`):
 
 ```bash
-cp -r <ce dépôt>/examples/save-mod examples/
+cp -r <this repository>/examples/save-mod examples/
+```
+
+```bash
 python -I tools/pack_build.py build3 --recipe examples/save-mod/recipe.json --profile profiles/op1f-1.7.3.json --out "out/save mod.pack"
 ```
 
-## Statut
+## Status
 
-- **Version 3 du pack** (forme du membre : version 2) : essayée sur une unité (OS 1.7.3+0, open-field 0.12). La vitesse bande, l'EQ, l'effet master avec ses valeurs et le compresseur reviennent avec chaque cassette.
-- Les versions 1 et 2 ne sont plus à utiliser. La version 1 ne gardait pas l'effet master et pouvait appliquer à un effet les valeurs d'un autre. Un gel a été vu en changeant d'effet avec elle. La version 2 rechargeait un autre effet que celui sauvé. Les cassettes qu'elles ont écrites sont lues par la version 3.
-- Le fichier `out/save mod.pack` a été buildé avec une toolchain Blackfin compilée sous Linux depuis le fork épinglé par open-xy. Avec cette toolchain, le loader et les exemples d'open-field sortent identiques octet pour octet aux références ; seul `base.pack` diffère légèrement. Un build avec la toolchain Windows de référence peut donner un fichier différent mais équivalent.
+- **Version 3 of the pack** (member form 2): tried on a unit (OS 1.7.3+0, open-field 0.12). The tape speed, the EQ, the master effect with its values and the compressor come back with each tape.
+- Versions 1 and 2 are not to be used:
+  - version 1 did not keep the master effect, and could put one effect's values on another; a freeze was seen with it while changing the effect;
+  - version 2 brought back another effect than the one saved.
+
+  The tapes they wrote are read by version 3.
+- `out/save mod.pack` was built with a Blackfin toolchain compiled on Linux from the fork open-xy pins. With that toolchain, open-field's loader and examples come out byte for byte the same as the kept ones; only `base.pack` differs slightly. A build with the Windows reference toolchain may give a different but equivalent file.
 
 ## Licence
 
-MIT, voir [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).
