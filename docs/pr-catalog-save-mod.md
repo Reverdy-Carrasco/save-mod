@@ -38,7 +38,7 @@ The README of the repository lists what each member holds and how earlier forms 
 
 ## What was tried on a unit
 
-- **The unit:** one OP-1 Field on OS 1.7.3+0, bootloader `<to fill in>`, open-field 0.12 with base 30.
+- **The unit:** one OP-1 Field on OS 1.7.3+0, bootloader 1000.1.1, open-field 0.12 with base 30.
 - **The packs on it:** `save mod` 4, `fx train` 16, `lfo` 11, `master mod` 1, `sidechain` 10 and `garden` 2.
 - **What came back with each tape:** the tape speed, the EQ, the master effect with its values, its switch and a wagon effect of `fx train` riding it, the compressor, and M1/M2.
 - **Earlier versions:** versions 1 to 3 were tried along the way. The tapes they wrote are read by version 4.
