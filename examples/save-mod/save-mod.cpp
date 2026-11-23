@@ -1,4 +1,4 @@
-// The pack `save mod`, version 2, for OS 1.7.3+0 of the OP-1 Field: the mixer's pages 2, 3 and 4 and the tape's speed
+// The pack `save mod`, version 3, for OS 1.7.3+0 of the OP-1 Field: the mixer's pages 2, 3 and 4 and the tape's speed
 // kept with each tape, through level 7 of the base (docs/level-7.md). It changes no place of the firmware.
 //
 // What it keeps, as one member of the tape's file, `save_mod`, its members in the order of their names:
@@ -32,13 +32,17 @@
 //   0x84c62228  the tape's speed, a 16-bit word, semitones x 1024
 //   0x8d50ff34  the function that changes the tape's speed by a step (which, step): called with a step of 0 after
 //               the word is written, so that the unit takes the new speed as it takes one from its knob
-//   0x11902e24  which master effect is on: its number, a 32-bit word the unit's own load and pick set
-//   0x8490e288  the unit's list of the master's effects: eleven pairs of words, the name (a text) and the number
-//   0x8c0ba620  the function that answers the mixer's controller (no argument)
-//   +0x28       the word of the controller's table of functions that puts an effect on the master (the controller,
-//               the number): the unit's own pick from its list, which also sets the effect's eight values to the
-//               effect's first ones. The base stands in that word (its op1f_fx_master_pick, for the packs' effects),
-//               so the pack calls through the word as the unit finds it, never the firmware's function itself
+//   0x11902e24  which master effect is on: its type, a 32-bit word the unit's own load and pick set
+//   0x8490e288  the firmware's eleven effects: pairs of words, the name (a text) and the type
+//   0x8f008e28  the function that builds an effect of a type (which, type), which 1 for the master: the unit's own
+//               load of its settings file calls it with the type it read, then the type word holds that type; the
+//               pack does the same. (The unit's pick from its list takes another number, the row's id in the unit's
+//               list of effects, which is not the type: version 2 of the pack called the pick with the type, and the
+//               unit put another effect on.) The base builds its packs' effects inside that function, and ends a
+//               pack's effect riding the master when the type word no longer holds the effect it rides
+//   0x840afe60  the knobs' ranges by type: the first four of the eight values are held to the range of the effect
+//               that is on before they are written (a value out of its range makes the unit say "Master fx param out
+//               of range" at every frame its page reads it)
 // The values are read once a frame and written only after a tape load, on the display thread, where the unit's own
 // pages change them. A 32-bit word is written whole, so the audio code never reads half a value.
 //
@@ -67,10 +71,13 @@ typedef void (*EqApplyFn)();
 static volatile int* const FX_TYPE = (volatile int*)0x11902e24u;
 struct EffectName { const char* name; int id; };
 static const EffectName* const EFFECT_NAMES = (const EffectName*)0x8490e288u;
-typedef void* (*ControllerFn)();
-#define STOCK_MIXER_CONTROLLER ((ControllerFn)0x8c0ba620u)
-typedef void (*PickFn)(void* controller, unsigned id);
-enum { PICK_WORD = 0x28 };
+typedef void (*EffectBuildFn)(int which, int type);
+#define STOCK_EFFECT_BUILD ((EffectBuildFn)0x8f008e28u)
+enum { BUILD_MASTER = 1 };
+// The knobs' ranges by type, filled by the unit at its start: 48 bytes a type, 6 a knob, the least (signed) and the
+// most (unsigned) of the knob's word's upper half. The base reads the first four, its effects' knobs, the same way.
+static const unsigned char* const KNOB_ROWS = (const unsigned char*)0x840afe60u;
+enum { ROW_BYTES = 48, KNOB_BYTES = 6, KNOBS = 4 };
 
 static const char LOG_FILE[] = "op1f/save_mod.cpp";       // the log shows "save_mod"
 static const char KEPT[] = "save_mod";
@@ -161,22 +168,36 @@ static int effect_id(const char* name, u32 n) {
     return -1;
 }
 
-// The master's effect put on as the owner's pick from the unit's list puts it on: through the controller's word, where
-// the base stands. It sets the effect's eight values to the effect's first ones: the tape's are written after it.
-static void pick_effect(int id) {
-    void* controller = STOCK_MIXER_CONTROLLER();
-    if (!controller) return;
-    const u32* table = *(const u32* const*)controller;
-    PickFn pick = (PickFn)table[PICK_WORD / 4];
-    if (pick) pick(controller, (unsigned)id);
+// The master's effect put on as the unit's own load of its settings file puts it on: built for the type, then the type
+// word set. The effect's eight values are written after it, as that load has them.
+static void put_effect(int type) {
+    STOCK_EFFECT_BUILD(BUILD_MASTER, type);
+    *FX_TYPE = type;
+}
+
+// A knob's value held to the range of its row for the effect of that type; as it was where the row has no span.
+static int held_to_row(int type, int knob, int v) {
+    const unsigned char* row = KNOB_ROWS + ROW_BYTES * type + KNOB_BYTES * knob;
+    int low = (short)(row[0] | (row[1] << 8));
+    int high = (int)(row[2] | (row[3] << 8));
+    if (high <= low) return v;
+    int x = low < 0 ? v : (int)(u16)v;                    // a row from 0 reads the upper half as unsigned, as the base does
+    if (x < low) x = low;
+    if (x > high) x = high;
+    return (int)(short)(u16)x;
 }
 
 static void write_unit(const Kept* k) {
-    if (k->effect >= 0 && k->effect != *FX_TYPE) pick_effect(k->effect);
+    if (k->effect >= 0 && k->effect != *FX_TYPE) put_effect(k->effect);
     int eq = 0;
     for (int i = 0; i < EQ_COUNT; ++i) eq |= put_word(&EQ_WORDS[i], k->v[i]);
     if (eq) STOCK_EQ_APPLY();                             // the EQ's words reach the sound only through it
-    for (int i = 0; i < FX_COUNT; ++i) put_word(&FX_WORDS[i], k->v[EQ_COUNT + i]);
+    int type = *FX_TYPE;
+    for (int i = 0; i < FX_COUNT; ++i) {
+        int v = k->v[EQ_COUNT + i];
+        if (i < (int)KNOBS && type >= 0 && type < (int)EFFECTS) v = held_to_row(type, i, v);
+        put_word(&FX_WORDS[i], v);
+    }
     for (int i = 0; i < MASTER_COUNT; ++i) put_word(&MASTER_WORDS[i], k->v[EQ_COUNT + FX_COUNT + i]);
     if (*TAPE_SPEED != k->speed) {
         *TAPE_SPEED = (short)k->speed;
@@ -359,7 +380,12 @@ static void tape_loaded() {
     s.tape = 1;
     Kept k;
     if (got >= 0 && read_kept(s.text, &k)) {
-        if (k.effect < 0) k.effect = *FX_TYPE >= 0 && *FX_TYPE < (int)EFFECTS ? *FX_TYPE : -1;   // none kept: the one on stays
+        if (k.effect < 0) {                               // none kept (version 1): the effect on stays, and its values with it,
+            Kept now;                                     // since the tape's may be another effect's
+            read_unit(&now);
+            k.effect = now.effect;
+            for (int i = 0; i < FX_COUNT; ++i) k.v[EQ_COUNT + i] = now.v[EQ_COUNT + i];
+        }
         write_unit(&k);
         copy(&s.last, &k);
         s.held = 1;
