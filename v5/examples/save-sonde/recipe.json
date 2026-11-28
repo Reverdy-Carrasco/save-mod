@@ -1,0 +1,29 @@
+{
+  "about": "A one-off probe of level 3's files on base 44 (release 0.26): reads of names that try to leave the pack's folder, writes from 256 KiB to 2.125 MiB read back, names with slashes, a list. One test a frame, once; results in user/pf/save-sonde/results.log and on the log. It changes no place of the firmware and needs the base. Not for the listing.",
+  "name": "save-sonde",
+  "version": 1,
+  "interface": 1,
+  "build": "build_m3_save_sonde",
+  "sources": [
+    "examples/save-sonde/save-sonde.cpp",
+    "examples/save-sonde/save-sonde_card.s"
+  ],
+  "works_with": [],
+  "serves": [],
+  "exports": [],
+  "pictures": [],
+  "card": {
+    "level": 3,
+    "frame": "save_sonde_frame",
+    "pick": null,
+    "pictures": false,
+    "input": null,
+    "folders": [
+      {}
+    ]
+  },
+  "marks": [],
+  "named": true,
+  "sum": true,
+  "path": null
+}
